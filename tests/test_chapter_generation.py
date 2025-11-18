@@ -22,14 +22,3 @@ def test_chapter_generation():
 def test_full_pipeline():
     """Test complete pipeline from video to chapters."""
     video_path = "tests/fixtures/test_video.mp4"
-
-    # Run full pipeline
-    # audio_path, = audio_extractor.extract_audio_moviepy(video_path)
-    # segments, = transcriber.transcribe(audio_path)
-    # embeddings = segmenter.generate_embeddings(segments)
-    # labels = segmenter.cluster_segments(embeddings)
-    # boundaries = segmenter.identify_chapter_boundaries(segments, labels)
-    # chapters = chapter_gen.generate_chapters(segments, boundaries)
-
-    # assert len(chapters) > 0
-    # assert all(ch.duration > 0 for ch in chapters)
