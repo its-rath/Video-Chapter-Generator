@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Chapter Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Patrick+Hand&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="paper-container">
+        <header>
+            <h1>Video Chapter Generator</h1>
+            <p class="subtitle">Automatic chapters with a human touch</p>
+        </header>
+
+        <main>
+            <section id="upload-section" class="sketch-box">
+                <div class="upload-area" id="drop-zone">
+                    <div class="icon-sketch">📹</div>
+                    <h2>Upload Video</h2>
+                    <p>Drag & drop or click to select</p>
+                    <input type="file" id="video-input" accept="video/*" hidden>
+                </div>
+                <div id="upload-status" class="hidden">
+                    <p>Processing... <span id="progress-text">0%</span></p>
+                    <div class="progress-bar-sketch">
+                        <div class="progress-fill" id="progress-fill"></div>
+                    </div>
+                </div>
+            </section>
+
+            <section id="options-section" class="sketch-box hidden">
+                <h3>Options</h3>
+                <div class="options-grid">
+                    <label class="sketch-checkbox">
+                        <input type="checkbox" id="scene-detection">
+                        <span class="checkmark"></span>
+                        Enable Scene Detection
+                    </label>
+                    <div class="sketch-input-group">
+                        <label>Language:</label>
+                        <select id="language-select" class="sketch-select">
+                            <option value="en">English</option>
+                            <option value="es">Spanish</option>
+                            <option value="fr">French</option>
+                            <option value="de">German</option>
+                        </select>
+                    </div>
+                </div>
+                <button id="generate-btn" class="sketch-button">Generate Chapters</button>
+            </section>
+
+            <section id="results-section" class="hidden">
+                <h3>Generated Chapters</h3>
+                <div id="chapters-list" class="notebook-lines">
+                    <!-- Chapters will be injected here -->
+                </div>
+                
+                <div class="export-actions">
+                    <button class="sketch-button small" data-format="youtube">Export YouTube</button>
+                    <button class="sketch-button small" data-format="json">Export JSON</button>
+                    <button class="sketch-button small" data-format="srt">Export SRT</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>~ Generated with AI ~</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

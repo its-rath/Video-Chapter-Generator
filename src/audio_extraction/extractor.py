@@ -3,7 +3,7 @@ import subprocess
 from pathlib import Path
 from typing import Optional, Tuple
 import logging
-from moviepy.editor import VideoFileClip
+from moviepy import VideoFileClip
 import librosa
 import soundfile as sf
 

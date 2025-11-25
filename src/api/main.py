@@ -1,4 +1,6 @@
-from fastapi import FastAPI, UploadFile, File, BackgroundTasks
+from fastapi import FastAPI, UploadFile, File, BackgroundTasks, Form
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel
 from typing import Optional
@@ -24,6 +26,15 @@ app = FastAPI(
     version="1.0.0"
 )
 
+# Enable CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 # Initialize components
 audio_extractor = AudioExtractor()
 transcriber = WhisperTranscriber(model_size="base", device="cpu")
@@ -46,8 +57,10 @@ async def health_check():
 @app.post("/generate-chapters")
 async def generate_chapters(
     video: UploadFile = File(...),
-    language: str = "en",
-    enable_scene_detection: bool = False
+    language: str = Form("en"),
+    enable_scene_detection: bool = Form(False),
+    min_chapter_duration: int = Form(60),
+    export_formats: list[str] = Form(["youtube", "json", "srt"])
 ):
     """
     Generate chapters from uploaded video.
@@ -86,7 +99,7 @@ async def generate_chapters(
 
         # Step 5: Generate chapters
         chapters = chapter_gen.generate_chapters(segments, boundaries, topics)
-        chapters = chapter_gen.optimize_chapter_durations(chapters)
+        chapters = chapter_gen.optimize_chapter_durations(chapters, min_duration=min_chapter_duration)
 
         # Step 6: Export formats
         output_dir = Path("data/output") / job_id
@@ -94,32 +107,39 @@ async def generate_chapters(
 
         # YouTube format
         youtube_path = output_dir / "chapters_youtube.txt"
-        youtube_content = YouTubeExporter().export(chapters)
-        with open(youtube_path, 'w') as f:
-            f.write(youtube_content)
+        if "youtube" in export_formats:
+            youtube_content = YouTubeExporter().export(chapters)
+            with open(youtube_path, 'w') as f:
+                f.write(youtube_content)
 
         # JSON format
         json_path = output_dir / "chapters.json"
-        JSONExporter().export(
-            chapters,
-            {"filename": video.filename, "duration": duration},
-            str(json_path)
-        )
+        if "json" in export_formats:
+            JSONExporter().export(
+                chapters,
+                {"filename": video.filename, "duration": duration},
+                str(json_path)
+            )
 
         # SRT format
         srt_path = output_dir / "subtitles.srt"
-        SubtitleGenerator().generate_srt(segments, str(srt_path))
+        if "srt" in export_formats:
+            SubtitleGenerator().generate_srt(segments, str(srt_path))
+
+        outputs = {}
+        if "youtube" in export_formats:
+            outputs["youtube"] = str(youtube_path)
+        if "json" in export_formats:
+            outputs["json"] = str(json_path)
+        if "srt" in export_formats:
+            outputs["srt"] = str(srt_path)
 
         return {
             "job_id": job_id,
             "status": "success",
             "chapters_count": len(chapters),
             "duration": duration,
-            "outputs": {
-                "youtube": str(youtube_path),
-                "json": str(json_path),
-                "srt": str(srt_path)
-            },
+            "outputs": outputs,
             "chapters": [
                 {
                     "number": ch.number,
@@ -162,6 +182,9 @@ async def download_output(job_id: str, format: str):
         )
 
     return FileResponse(file_path, filename=file_path.name)
+
+# Mount frontend
+app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
