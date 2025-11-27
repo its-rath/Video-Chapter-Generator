@@ -7,14 +7,14 @@ from typing import Optional
 import logging
 from pathlib import Path
 import uuid
-from src.audio_extraction.extractor import AudioExtractor
-from src.transcription.whisper_asr import WhisperTranscriber
-from src.segmentation.nlp_segmenter import NLPSegmenter
-from src.scene_detection.visual_detector import VisualSceneDetector
-from src.chapter_generation.generator import ChapterGenerator
-from src.export.youtube_format import YouTubeExporter
-from src.export.subtitle_generator import SubtitleGenerator
-from src.export.json_exporter import JSONExporter
+# from src.audio_extraction.extractor import AudioExtractor
+# from src.transcription.whisper_asr import WhisperTranscriber
+# from src.segmentation.nlp_segmenter import NLPSegmenter
+# from src.scene_detection.visual_detector import VisualSceneDetector
+# from src.chapter_generation.generator import ChapterGenerator
+# from src.export.youtube_format import YouTubeExporter
+# from src.export.subtitle_generator import SubtitleGenerator
+# from src.export.json_exporter import JSONExporter
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -36,11 +36,93 @@ app.add_middleware(
 )
 
 # Initialize components
-audio_extractor = AudioExtractor()
-transcriber = WhisperTranscriber(model_size="base", device="cpu")
-segmenter = NLPSegmenter()
-scene_detector = VisualSceneDetector()
-chapter_gen = ChapterGenerator()
+# Initialize components
+# Initialize components
+# logger.info("Initializing AudioExtractor...")
+# audio_extractor = AudioExtractor()
+
+# MOCKING COMPONENTS FOR FRONTEND PREVIEW
+logger.info("Mocking heavy components for preview...")
+
+class MockAudioExtractor:
+    def extract_audio_moviepy(self, path): 
+        # Create a dummy audio file
+        audio_path = Path("data/temp/mock_audio.wav")
+        audio_path.parent.mkdir(parents=True, exist_ok=True)
+        audio_path.touch()
+        return str(audio_path), 120.0
+
+class MockTranscriber:
+    def transcribe(self, path, language="en"):
+        # Return dummy segments
+        from dataclasses import dataclass
+        @dataclass
+        class Segment:
+            start: float
+            end: float
+            text: str
+        
+        return [
+            Segment(0.0, 10.0, "Welcome to this video."),
+            Segment(10.0, 60.0, "This is the first chapter content."),
+            Segment(60.0, 120.0, "And this is the conclusion.")
+        ], {}
+
+class MockSegmenter:
+    def generate_embeddings(self, segments): return []
+    def cluster_segments(self, embeddings): return []
+    def identify_chapter_boundaries(self, segments, labels): return [0, 2] # Start at 0 and 2
+    def extract_topics_nmf(self, segments, n_topics=1): return ["Introduction", "Conclusion"]
+
+class MockSceneDetector:
+    pass
+
+class MockChapterGenerator:
+    def generate_chapters(self, segments, boundaries, topics):
+        from dataclasses import dataclass
+        @dataclass
+        class Chapter:
+            number: int
+            title: str
+            start_time: float
+            end_time: float
+            duration: float = 0.0
+            description: str = ""
+            
+        return [
+            Chapter(1, "Introduction", 0.0, 60.0, 60.0, "Intro description"),
+            Chapter(2, "Conclusion", 60.0, 120.0, 60.0, "Conclusion description")
+        ]
+    
+    def optimize_chapter_durations(self, chapters, min_duration=60):
+        return chapters
+
+class MockYouTubeExporter:
+    def export(self, chapters): return "00:00 Introduction\n01:00 Conclusion"
+
+class MockJSONExporter:
+    def export(self, chapters, metadata, path):
+        import json
+        with open(path, 'w') as f:
+            json.dump({"chapters": []}, f)
+
+class MockSubtitleGenerator:
+    def generate_srt(self, segments, path):
+        with open(path, 'w') as f:
+            f.write("1\n00:00:00,000 --> 00:00:10,000\nWelcome to this video.")
+
+audio_extractor = MockAudioExtractor()
+transcriber = MockTranscriber()
+segmenter = MockSegmenter()
+scene_detector = MockSceneDetector()
+chapter_gen = MockChapterGenerator()
+
+# Helper classes for export
+class YouTubeExporter(MockYouTubeExporter): pass
+class JSONExporter(MockJSONExporter): pass
+class SubtitleGenerator(MockSubtitleGenerator): pass
+
+logger.info("All components initialized (MOCKED).")
 
 class ChapterRequest(BaseModel):
     video_path: str
@@ -183,8 +265,12 @@ async def download_output(job_id: str, format: str):
 
     return FileResponse(file_path, filename=file_path.name)
 
-# Mount frontend
-app.mount("/", StaticFiles(directory="frontend", html=True), name="frontend")
+# Mount static files
+app.mount("/static", StaticFiles(directory="frontend"), name="static")
+
+@app.get("/")
+async def read_index():
+    return FileResponse("frontend/index.html")
 
 if __name__ == "__main__":
     import uvicorn
